@@ -2,7 +2,7 @@
 SHELL := /bin/bash
 
 PAAS_ORG = gds-tech-ops
-PAAS_APP_NAME ?= test-metric-exporter
+PAAS_APP_NAME ?= re-whitelist-route-service
 PAAS_DOMAIN ?= cloudapps.digital
 
 $(eval export PAAS_APP_NAME=${PAAS_APP_NAME})
@@ -13,20 +13,13 @@ help:
 
 .PHONY: generate-manifest
 generate-manifest: ## Generates the PaaS manifest file
-	$(if ${PAAS_SPACE},,$(error Must specify PAAS_SPACE))
-	ALLOWED_IPS=${PROMETHEUS_IP} erb manifest.yml.erb
-
-.PHONY: development
-production: ## Set PaaS space to production
-	$(eval export PAAS_SPACE=test-service-broker)
-	$(eval export PAAS_INSTANCES=1)
-	@true
+	ALLOWED_IPS=${PROMETHEUS_IP_LIST} erb manifest.yml.erb
 
 .PHONY: paas-login
 paas-login: ## Log in to PaaS
 	$(if ${PAAS_USERNAME},,$(error Must specify PAAS_USERNAME))
 	$(if ${PAAS_PASSWORD},,$(error Must specify PAAS_PASSWORD))
-	$(if ${PAAS_SPACE},,$(error Must specify PAAS_SPACE))
+
 	mkdir -p ${CF_HOME}
 	@cf login -a "${PAAS_API}" -u ${PAAS_USERNAME} -p "${PAAS_PASSWORD}" -o "${PAAS_ORG}" -s "${PAAS_SPACE}"
 
@@ -36,8 +29,7 @@ paas-push: ## Pushes the app to Cloud Foundry (causes downtime!)
 
 .PHONY: paas-create-route-service
 paas-create-route-service: ## Creates the route service
-	$(if ${PAAS_SPACE},,$(error Must specify PAAS_SPACE))
-	cf create-user-provided-service ${PAAS_APP_NAME} -r https://re-${PAAS_APP_NAME}-${PAAS_SPACE}.cloudapps.digital
+	cf create-user-provided-service ${PAAS_APP_NAME} -r https://${PAAS_APP_NAME}.cloudapps.digital
 
 .PHONY: paas-bind-route-service
 paas-bind-route-service: ## Binds the route service to the given route
