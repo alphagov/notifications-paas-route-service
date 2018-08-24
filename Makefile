@@ -19,11 +19,12 @@ generate-manifest: ## Generates the PaaS manifest file
 .PHONY: api
 api:
 	$(eval export SUBDOMAIN=api)
-
+	@true
 
 .PHONY: admin
 admin:
 	$(eval export SUBDOMAIN=www)
+	@true
 
 .PHONY: preview
 preview: ## Set PaaS space to preview
@@ -78,3 +79,8 @@ cf-create-route-service: check-variables ## Creates the route service
 cf-bind-route-service: check-variables ## Binds the route service to the given route
 	$(if ${SUBDOMAIN},,$(error Must specify SUBDOMAIN))
 	cf bind-route-service ${BASE_DOMAIN} ${CF_APP_NAME} --hostname ${SUBDOMAIN}
+
+.PHONY: cf-unbind-route-service
+cf-unbind-route-service: check-variables ## Binds the route service to the given route
+	$(if ${SUBDOMAIN},,$(error Must specify SUBDOMAIN))
+	cf unbind-route-service ${BASE_DOMAIN} ${CF_APP_NAME} --hostname ${SUBDOMAIN}
