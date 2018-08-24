@@ -51,18 +51,24 @@ check-variables:
 	$(if ${CF_SPACE},,$(error Must specify CF_SPACE))
 	cf target -s ${CF_SPACE}
 
+.PHONY: add-cloudfront-ips
+add-cloudfront-ips:
+	./add_cloudfront_ips.sh
+
 .PHONY: cf-push
-cf-push: check-variables ## Pushes the app to Cloud Foundry (causes downtime!)
+cf-push: check-variables add-cloudfront-ips ## Pushes the app to Cloud Foundry (causes downtime!)
 	cf push -f <(make -s generate-manifest)
+	rm nginx.conf
 
 .PHONY: cf-deploy
-cf-deploy: check-variables ## Deploys the app to Cloud Foundry without downtime
+cf-deploy: check-variables add-cloudfront-ips ## Deploys the app to Cloud Foundry without downtime
 	@cf app --guid ${CF_APP_NAME} || exit 1
 	cf rename ${CF_APP_NAME} ${CF_APP_NAME}-rollback
 	cf push -f <(make -s generate-manifest)
 	cf scale -i $$(cf curl /v2/apps/$$(cf app --guid ${CF_APP_NAME}) | jq -r ".entity.instances" 2>/dev/null || echo "1") ${CF_APP_NAME}
 	cf stop ${CF_APP_NAME}-rollback
 	cf delete -f ${CF_APP_NAME}-rollback
+	rm nginx.conf
 
 .PHONY: cf-rollback
 cf-rollback: check-variables ## Rollbacks the app to the previous release
