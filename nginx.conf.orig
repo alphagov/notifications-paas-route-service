@@ -28,6 +28,7 @@ http {
   sendfile on;
   tcp_nopush on;
   keepalive_timeout 30;
+  client_max_body_size 5m;
   port_in_redirect off; # Ensure that redirects don't include the internal container PORT
   server_tokens off;
 
@@ -63,9 +64,26 @@ http {
 
   <% end %>
 
+    error_page 404 /error/404;
+
+    location /static/ {
+        auth_basic "off";
+        allow "all";
+        include <%= ENV.fetch("HOME") %>/nginx/conf/mime.types;
+        expires 1y;
+        access_log off;
+        add_header Cache-Control "public";
+    }
+
+    location ~ ^/(_status|error/404) {
+        auth_basic "off";
+        allow "all";
+    }
+
     location / {
       resolver 10.0.0.2 ipv6=off;
       proxy_pass $http_x_cf_forwarded_url;
     }
+
   }
 }
