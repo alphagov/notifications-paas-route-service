@@ -58,6 +58,9 @@ http {
     allow 52.214.41.17/32;
     deny all;
 
+    auth_basic "GOV.UK Notify - Restricted Area";
+    auth_basic_user_file <%= ENV.fetch("HOME") %>/public/htpasswd;
+
   <% end %>
 
     location / {

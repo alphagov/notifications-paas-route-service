@@ -3,6 +3,8 @@ SHELL := /bin/bash
 
 CF_ORG = govuk-notify
 CF_APP_NAME ?= route-service
+NOTIFY_CREDENTIALS ?= ~/.notify-credentials
+
 
 $(eval export CF_APP_NAME=${CF_APP_NAME})
 
@@ -55,20 +57,28 @@ check-variables:
 add-cloudfront-ips:
 	./add_cloudfront_ips.sh
 
+.PHONY: generate-htpasswd
+generate-htpasswd:
+	rm -f htpasswd
+	$(if $(shell which gpg2), $(eval export GPG=gpg2), $(eval export GPG=gpg))
+	$(if ${GPG_PASSPHRASE_TXT}, $(eval export DECRYPT_CMD=echo -n $$$${GPG_PASSPHRASE_TXT} | ${GPG} --quiet --batch --passphrase-fd 0 --pinentry-mode loopback -d), $(eval export DECRYPT_CMD=${GPG} --quiet --batch -d))
+	@htpasswd -ibc htpasswd notify $(shell ${DECRYPT_CMD} ${NOTIFY_CREDENTIALS}/credentials/http_auth/notify/password.gpg)
+	@true
+
 .PHONY: cf-push
-cf-push: check-variables add-cloudfront-ips ## Pushes the app to Cloud Foundry (causes downtime!)
+cf-push: check-variables add-cloudfront-ips generate-htpasswd ## Pushes the app to Cloud Foundry (causes downtime!)
 	cf push -f <(make -s generate-manifest)
-	rm nginx.conf
+	rm nginx.conf htpasswd
 
 .PHONY: cf-deploy
-cf-deploy: check-variables add-cloudfront-ips ## Deploys the app to Cloud Foundry without downtime
+cf-deploy: check-variables add-cloudfront-ips generate-htpasswd ## Deploys the app to Cloud Foundry without downtime
 	@cf app --guid ${CF_APP_NAME} || exit 1
 	cf rename ${CF_APP_NAME} ${CF_APP_NAME}-rollback
 	cf push -f <(make -s generate-manifest)
 	cf scale -i $$(cf curl /v2/apps/$$(cf app --guid ${CF_APP_NAME}) | jq -r ".entity.instances" 2>/dev/null || echo "1") ${CF_APP_NAME}
 	cf stop ${CF_APP_NAME}-rollback
 	cf delete -f ${CF_APP_NAME}-rollback
-	rm nginx.conf
+	rm nginx.conf htpasswd
 
 .PHONY: cf-rollback
 cf-rollback: check-variables ## Rollbacks the app to the previous release
