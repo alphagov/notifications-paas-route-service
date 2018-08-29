@@ -28,18 +28,21 @@ admin:
 .PHONY: preview
 preview: ## Set PaaS space to preview
 	$(eval export CF_SPACE=preview)
+	$(eval export BASE_DOMAIN=notify.works)
 	@true
 
 .PHONY: staging
 staging: ## Set PaaS space to staging
 	$(eval export CF_SPACE=staging)
 	$(eval export CF_INSTANCES=2)
+	# $(eval export BASE_DOMAIN=staging-notify.works)
 	@true
 
 .PHONY: production
 production: ## Set PaaS space to production
 	$(eval export CF_SPACE=production)
 	$(eval export CF_INSTANCES=2)
+	# $(eval export BASE_DOMAIN=notifications.service.gov.uk)
 	@true
 
 .PHONY: check-variables
