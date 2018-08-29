@@ -14,7 +14,7 @@ help:
 generate-manifest: ## Generates the PaaS manifest file
 	$(if ${CF_SPACE},,$(error Must specify CF_SPACE))
 	$(if ${NOTIFY_CREDENTIALS},,$(error Must specify NOTIFY_CREDENTIALS))
-	ALLOWED_IPS=$$(PASSWORD_STORE_DIR=${NOTIFY_CREDENTIALS} pass "credentials/${CF_SPACE}/paas/allowed_ips") erb manifest.yml.erb
+	erb manifest.yml.erb
 
 .PHONY: api
 api:

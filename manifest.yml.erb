@@ -8,4 +8,4 @@ applications:
     instances: <%= ENV.fetch("CF_INSTANCES", "1") %>
     memory: 512M
     env:
-      ALLOWED_IPS: "<%= ENV.fetch("ALLOWED_IPS") %>"
+      CF_SPACE: "<%= ENV.fetch("CF_SPACE") %>"
