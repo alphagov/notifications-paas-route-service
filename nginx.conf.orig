@@ -65,6 +65,11 @@ http {
   <% end %>
 
     error_page 404 /error/404;
+    error_page 413 @413;
+
+    location @413 {
+        return 302 https://www.<%= ENV.fetch("BASE_DOMAIN")%>/error/413;
+    }
 
     location /static/ {
         auth_basic "off";
