@@ -1,11 +1,11 @@
 .DEFAULT_GOAL := help
 SHELL := /bin/bash
 
-PAAS_ORG = govuk-notify
-PAAS_APP_NAME ?= route-service
+CF_ORG = govuk-notify
+CF_APP_NAME ?= route-service
 PAAS_DOMAIN ?= cloudapps.digital
 
-$(eval export PAAS_APP_NAME=${PAAS_APP_NAME})
+$(eval export CF_APP_NAME=${CF_APP_NAME})
 
 .PHONY: help
 help:
@@ -13,62 +13,57 @@ help:
 
 .PHONY: generate-manifest
 generate-manifest: ## Generates the PaaS manifest file
-	$(if ${PAAS_SPACE},,$(error Must specify PAAS_SPACE))
+	$(if ${CF_SPACE},,$(error Must specify CF_SPACE))
 	$(if ${NOTIFY_CREDENTIALS},,$(error Must specify NOTIFY_CREDENTIALS))
-	ALLOWED_IPS=$$(PASSWORD_STORE_DIR=${NOTIFY_CREDENTIALS} pass "credentials/${PAAS_SPACE}/paas/allowed_ips") erb manifest.yml.erb
+	ALLOWED_IPS=$$(PASSWORD_STORE_DIR=${NOTIFY_CREDENTIALS} pass "credentials/${CF_SPACE}/paas/allowed_ips") erb manifest.yml.erb
 
 .PHONY: preview
 preview: ## Set PaaS space to preview
-	$(eval export PAAS_SPACE=preview)
+	$(eval export CF_SPACE=preview)
 	@true
 
 .PHONY: staging
 staging: ## Set PaaS space to staging
-	$(eval export PAAS_SPACE=staging)
-	$(eval export PAAS_INSTANCES=2)
+	$(eval export CF_SPACE=staging)
+	$(eval export CF_INSTANCES=2)
 	@true
 
 .PHONY: production
 production: ## Set PaaS space to production
-	$(eval export PAAS_SPACE=production)
-	$(eval export PAAS_INSTANCES=2)
+	$(eval export CF_SPACE=production)
+	$(eval export CF_INSTANCES=2)
 	@true
 
-.PHONY: paas-login
-paas-login: ## Log in to PaaS
-	$(if ${PAAS_USERNAME},,$(error Must specify PAAS_USERNAME))
-	$(if ${PAAS_PASSWORD},,$(error Must specify PAAS_PASSWORD))
-	$(if ${PAAS_SPACE},,$(error Must specify PAAS_SPACE))
-	mkdir -p ${CF_HOME}
-	@cf login -a "${PAAS_API}" -u ${PAAS_USERNAME} -p "${PAAS_PASSWORD}" -o "${PAAS_ORG}" -s "${PAAS_SPACE}"
+.PHONY: check-variables
+check-variables:
+	$(if ${CF_SPACE},,$(error Must specify CF_SPACE))
+	cf target -s ${CF_SPACE}
 
-.PHONY: paas-push
-paas-push: ## Pushes the app to Cloud Foundry (causes downtime!)
+.PHONY: cf-push
+cf-push: check-variables ## Pushes the app to Cloud Foundry (causes downtime!)
 	cf push -f <(make -s generate-manifest)
 
-.PHONY: paas-deploy
-paas-deploy: ## Deploys the app to Cloud Foundry without downtime
-	$(if ${PAAS_SPACE},,$(error Must specify PAAS_SPACE))
-	@cf app --guid ${PAAS_APP_NAME} || exit 1
-	cf rename ${PAAS_APP_NAME} ${PAAS_APP_NAME}-rollback
+.PHONY: cf-deploy
+cf-deploy: check-variables ## Deploys the app to Cloud Foundry without downtime
+	@cf app --guid ${CF_APP_NAME} || exit 1
+	cf rename ${CF_APP_NAME} ${CF_APP_NAME}-rollback
 	cf push -f <(make -s generate-manifest)
-	cf scale -i $$(cf curl /v2/apps/$$(cf app --guid ${PAAS_APP_NAME}) | jq -r ".entity.instances" 2>/dev/null || echo "1") ${PAAS_APP_NAME}
-	cf stop ${PAAS_APP_NAME}-rollback
-	cf delete -f ${PAAS_APP_NAME}-rollback
+	cf scale -i $$(cf curl /v2/apps/$$(cf app --guid ${CF_APP_NAME}) | jq -r ".entity.instances" 2>/dev/null || echo "1") ${CF_APP_NAME}
+	cf stop ${CF_APP_NAME}-rollback
+	cf delete -f ${CF_APP_NAME}-rollback
 
-.PHONY: paas-rollback
-paas-rollback: ## Rollbacks the app to the previous release
-	@cf app --guid ${PAAS_APP_NAME}-rollback || exit 1
-	@[ $$(cf curl /v2/apps/`cf app --guid ${PAAS_APP_NAME}-rollback` | jq -r ".entity.state") = "STARTED" ] || (echo "Error: rollback is not possible because ${PAAS_APP_NAME}-rollback is not in a started state" && exit 1)
-	cf delete -f ${PAAS_APP_NAME} || true
-	cf rename ${PAAS_APP_NAME}-rollback ${PAAS_APP_NAME}
+.PHONY: cf-rollback
+cf-rollback: check-variables ## Rollbacks the app to the previous release
+	@cf app --guid ${CF_APP_NAME}-rollback || exit 1
+	@[ $$(cf curl /v2/apps/`cf app --guid ${CF_APP_NAME}-rollback` | jq -r ".entity.state") = "STARTED" ] || (echo "Error: rollback is not possible because ${CF_APP_NAME}-rollback is not in a started state" && exit 1)
+	cf delete -f ${CF_APP_NAME} || true
+	cf rename ${CF_APP_NAME}-rollback ${CF_APP_NAME}
 
-.PHONY: paas-create-route-service
-paas-create-route-service: ## Creates the route service
-	$(if ${PAAS_SPACE},,$(error Must specify PAAS_SPACE))
-	cf create-user-provided-service ${PAAS_APP_NAME} -r https://notify-${PAAS_APP_NAME}-${PAAS_SPACE}.cloudapps.digital
+.PHONY: cf-create-route-service
+cf-create-route-service: check-variables ## Creates the route service
+	cf create-user-provided-service ${CF_APP_NAME} -r https://notify-${CF_APP_NAME}-${CF_SPACE}.cloudapps.digital
 
-.PHONY: paas-bind-route-service
-paas-bind-route-service: ## Binds the route service to the given route
-	$(if ${PAAS_ROUTE},,$(error Must specify PAAS_ROUTE))
-	cf bind-route-service ${PAAS_DOMAIN} ${PAAS_APP_NAME} --hostname ${PAAS_ROUTE}
+.PHONY: cf-bind-route-service
+cf-bind-route-service: check-variables ## Binds the route service to the given route
+	$(if ${SUBDOMAIN},,$(error Must specify SUBDOMAIN))
+	cf bind-route-service ${BASE_DOMAIN} ${CF_APP_NAME} --hostname ${SUBDOMAIN}

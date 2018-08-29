@@ -1,11 +1,11 @@
 ---
 
 applications:
-  - name: <%= ENV.fetch("PAAS_APP_NAME") %>
+  - name: <%= ENV.fetch("CF_APP_NAME") %>
     routes:
-      - route: notify-route-service-<%= ENV.fetch("PAAS_SPACE") %>.cloudapps.digital
+      - route: notify-route-service-<%= ENV.fetch("CF_SPACE") %>.cloudapps.digital
     buildpack: staticfile_buildpack
-    instances: <%= ENV.fetch("PAAS_INSTANCES", "1") %>
+    instances: <%= ENV.fetch("CF_INSTANCES", "1") %>
     memory: 512M
     env:
       ALLOWED_IPS: "<%= ENV.fetch("ALLOWED_IPS") %>"
