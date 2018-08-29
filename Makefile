@@ -3,7 +3,6 @@ SHELL := /bin/bash
 
 CF_ORG = govuk-notify
 CF_APP_NAME ?= route-service
-PAAS_DOMAIN ?= cloudapps.digital
 
 $(eval export CF_APP_NAME=${CF_APP_NAME})
 
@@ -16,6 +15,15 @@ generate-manifest: ## Generates the PaaS manifest file
 	$(if ${CF_SPACE},,$(error Must specify CF_SPACE))
 	$(if ${NOTIFY_CREDENTIALS},,$(error Must specify NOTIFY_CREDENTIALS))
 	ALLOWED_IPS=$$(PASSWORD_STORE_DIR=${NOTIFY_CREDENTIALS} pass "credentials/${CF_SPACE}/paas/allowed_ips") erb manifest.yml.erb
+
+.PHONY: api
+api:
+	$(eval export SUBDOMAIN=api)
+
+
+.PHONY: admin
+admin:
+	$(eval export SUBDOMAIN=www)
 
 .PHONY: preview
 preview: ## Set PaaS space to preview
