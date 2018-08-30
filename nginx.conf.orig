@@ -78,17 +78,18 @@ http {
         expires 1y;
         access_log off;
         add_header Cache-Control "public";
+        proxy_pass $http_x_cf_forwarded_url;
     }
 
     location ~ ^/(_status|error/404) {
         auth_basic "off";
         allow "all";
+        proxy_pass $http_x_cf_forwarded_url;
     }
 
     location / {
-      resolver 10.0.0.2 ipv6=off;
-      proxy_pass $http_x_cf_forwarded_url;
+        resolver 10.0.0.2 ipv6=off;
+        proxy_pass $http_x_cf_forwarded_url;
     }
-
   }
 }
