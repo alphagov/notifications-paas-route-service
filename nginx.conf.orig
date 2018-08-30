@@ -40,6 +40,7 @@ http {
     listen <%= ENV.fetch("PORT") %>;
     server_name localhost;
     proxy_ssl_server_name on;
+    resolver 10.0.0.2 ipv6=off;
 
     if ($http_x_cf_forwarded_url = "") {
       return 403;
@@ -88,7 +89,6 @@ http {
     }
 
     location / {
-        resolver 10.0.0.2 ipv6=off;
         proxy_pass $http_x_cf_forwarded_url;
     }
   }
