@@ -1,4 +1,4 @@
-# Notiy PaaS Route Service
+# Notify PaaS Route Service
 
 This application contains a simple Nginx application which acts as a proxy for all Notify PaaS web applications and provides an IP restriction layer
 
