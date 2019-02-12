@@ -28,19 +28,19 @@ The instance count can be set with the PAAS_INSTANCES environment variable (1 by
 If you're deploying the very first time, simply run:
 
 ```
-make <PaaS space> paas-push
+make <PaaS space> cf-push
 ```
 
 For zero-downtime deployments use the following command:
 
 ```
-make <PaaS space> paas-deploy
+make <PaaS space> cf-deploy
 ```
 
 If the zero-downtime deployment couldn't finish you can rollback to the previous version:
 
 ```
-make <PaaS space> paas-rollback
+make <PaaS space> cf-rollback
 ```
 
 ## Registering the application as a user-provided service
@@ -48,14 +48,18 @@ make <PaaS space> paas-rollback
 You only need to do this once per PaaS space.
 
 ```
-make <PaaS space> paas-create-route-service
+make <PaaS space> cf-create-route-service
 ```
 
 ## Register the application as a route-service for a route
 
 You only need to do this once per PaaS space and for all routes.
 
-make <PaaS space> paas-bind-route-service PAAS_ROUTE=<route of your application>
+```
+make <PaaS space> <app_name> cf-bind-route-service
+```
+
+Where `app_name` either `admin` or `api` which will bind the `www.` or `api.` subdomain respectively.
 
 ## Complete installation example
 
