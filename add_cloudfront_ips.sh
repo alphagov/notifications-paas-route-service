@@ -11,6 +11,9 @@ cloudfront_ips=$(curl -s http://d7uri8nf7uskq.cloudfront.net/tools/list-cloudfro
 cat << EOF > ./tmp-ips
 set_real_ip_from 10.0.0.0/8;
 set_real_ip_from 127.0.0.1/32;
+set_real_ip_from 52.208.24.161/32;
+set_real_ip_from 52.208.1.143/32;
+set_real_ip from 52.51.250.21/32;
 set_real_ip_from $cloudfront_ips;
 EOF
 
