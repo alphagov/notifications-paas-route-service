@@ -58,6 +58,8 @@ http {
     allow 213.86.153.237/32;
     allow 52.17.245.89/32;
     allow 52.214.41.17/32;
+    allow 3.8.59.139/32;
+    allow 35.178.19.228/32;
     deny all;
 
     auth_basic "GOV.UK Notify - Restricted Area";
