@@ -17,8 +17,14 @@ help:
 .PHONY: generate-manifest
 generate-manifest: ## Generates the PaaS manifest file
 	$(if ${CF_SPACE},,$(error Must specify CF_SPACE))
-	$(if ${NOTIFY_CREDENTIALS},,$(error Must specify NOTIFY_CREDENTIALS))
-	erb manifest.yml.erb
+	$(if ${CF_APP_NAME},,$(error Must specify CF_APP_NAME))
+	$(if ${BASE_DOMAIN},,$(error Must specify BASE_DOMAIN))
+	@jinja2 --strict manifest.yml.j2 \
+	    -D CF_APP_NAME=${CF_APP_NAME} \
+	    -D CF_SPACE=${CF_SPACE} \
+	    -D CF_INSTANCES=${CF_INSTANCES} \
+	    -D BASE_DOMAIN=${BASE_DOMAIN} \
+	    --format=yaml \
 
 .PHONY: api
 api:

@@ -7,9 +7,7 @@ All PaaS traffic will go through the route service therefore we can completely p
 ## Requirements
 
 * Cloud Foundry CLI (https://docs.cloudfoundry.org/cf-cli/install-go-cli.html)
-* The manifest template is generated using Ruby ERB therefore Ruby needs to be installed.
-
-You should log in using the Cloud Foundry CLI (https://docs.cloud.service.gov.uk/#setting-up-the-command-line).
+* The manifest template is generated using jinja. You can install this using `pip install jinja2-cli`
 
 For all actions you should always have to make sure you selected the space you intend to target.
 
