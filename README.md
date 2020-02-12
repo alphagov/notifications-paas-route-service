@@ -17,7 +17,7 @@ The default application name is "route-service". If you want to change this (or 
 
 The default domain name is "cloudapps.digital". If you want to change this (or you want to bind to different domains), set the PAAS_DOMAIN environment variable for the make commands.
 
-The secret values are read from the notifications-credentials repository using pass, so you have to set the NOTIFY_CREDENTIALS environment variable to your local credentials repository path. The values are read from paas/route-service-env.enc.
+The secret values are read from the notifications-credentials repository using pass, so you have to set the NOTIFY_CREDENTIALS environment variable to your local credentials repository path. The values are read from `credentials/http_auth/notify/password`.
 
 The instance count can be set with the PAAS_INSTANCES environment variable (1 by default).
 
