@@ -49,13 +49,6 @@ staging: ## Set PaaS space to staging
 	$(eval export BASE_DOMAIN=staging-notify.works)
 	@true
 
-.PHONY: production
-production: ## Set PaaS space to production
-	$(eval export CF_SPACE=production)
-	$(eval export CF_INSTANCES=2)
-	$(eval export BASE_DOMAIN=notifications.service.gov.uk)
-	@true
-
 .PHONY: check-variables
 check-variables:
 	$(if ${CF_SPACE},,$(error Must specify CF_SPACE))
