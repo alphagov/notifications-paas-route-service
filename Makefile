@@ -1,8 +1,10 @@
 .DEFAULT_GOAL := help
 SHELL := /bin/bash
 
+CF_API = api.cloud.service.gov.uk
 CF_ORG = govuk-notify
 CF_APP_NAME ?= route-service
+
 NOTIFY_CREDENTIALS ?= ~/.notify-credentials
 
 
@@ -15,8 +17,14 @@ help:
 .PHONY: generate-manifest
 generate-manifest: ## Generates the PaaS manifest file
 	$(if ${CF_SPACE},,$(error Must specify CF_SPACE))
-	$(if ${NOTIFY_CREDENTIALS},,$(error Must specify NOTIFY_CREDENTIALS))
-	erb manifest.yml.erb
+	$(if ${CF_APP_NAME},,$(error Must specify CF_APP_NAME))
+	$(if ${BASE_DOMAIN},,$(error Must specify BASE_DOMAIN))
+	@jinja2 --strict manifest.yml.j2 \
+	    -D CF_APP_NAME=${CF_APP_NAME} \
+	    -D CF_SPACE=${CF_SPACE} \
+	    -D CF_INSTANCES=${CF_INSTANCES} \
+	    -D BASE_DOMAIN=${BASE_DOMAIN} \
+	    --format=yaml \
 
 .PHONY: api
 api:
@@ -38,14 +46,7 @@ preview: ## Set PaaS space to preview
 staging: ## Set PaaS space to staging
 	$(eval export CF_SPACE=staging)
 	$(eval export CF_INSTANCES=2)
-	# $(eval export BASE_DOMAIN=staging-notify.works)
-	@true
-
-.PHONY: production
-production: ## Set PaaS space to production
-	$(eval export CF_SPACE=production)
-	$(eval export CF_INSTANCES=2)
-	# $(eval export BASE_DOMAIN=notifications.service.gov.uk)
+	$(eval export BASE_DOMAIN=staging-notify.works)
 	@true
 
 .PHONY: check-variables
@@ -64,6 +65,14 @@ generate-htpasswd:
 	$(if ${GPG_PASSPHRASE_TXT}, $(eval export DECRYPT_CMD=echo -n $$$${GPG_PASSPHRASE_TXT} | ${GPG} --quiet --batch --passphrase-fd 0 --pinentry-mode loopback -d), $(eval export DECRYPT_CMD=${GPG} --quiet --batch -d))
 	@htpasswd -ibc htpasswd notify $(shell ${DECRYPT_CMD} ${NOTIFY_CREDENTIALS}/credentials/http_auth/notify/password.gpg)
 	@true
+
+.PHONY: cf-login
+cf-login: ## Log in to Cloud Foundry
+	$(if ${CF_USERNAME},,$(error Must specify CF_USERNAME))
+	$(if ${CF_PASSWORD},,$(error Must specify CF_PASSWORD))
+	$(if ${CF_SPACE},,$(error Must specify CF_SPACE))
+	@echo "Logging in to Cloud Foundry on ${CF_API}"
+	@cf login -a "${CF_API}" -u ${CF_USERNAME} -p "${CF_PASSWORD}" -o "${CF_ORG}" -s "${CF_SPACE}"
 
 .PHONY: cf-push
 cf-push: check-variables add-cloudfront-ips generate-htpasswd ## Pushes the app to Cloud Foundry (causes downtime!)

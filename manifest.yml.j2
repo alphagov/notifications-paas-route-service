@@ -1,0 +1,12 @@
+---
+
+applications:
+  - name: {{CF_APP_NAME }}
+    routes:
+      - route: notify-route-service-{{ CF_SPACE }}.cloudapps.digital
+    buildpack: staticfile_buildpack
+    instances: {{ CF_INSTANCES|default("1", true) }}
+    memory: 512M
+    env:
+      CF_SPACE: "{{ CF_SPACE }}"
+      BASE_DOMAIN: "{{ BASE_DOMAIN }}"

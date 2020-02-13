@@ -1,17 +1,15 @@
 # Notify PaaS Route Service
 
-This application contains a simple Nginx application which acts as a proxy for all Notify PaaS web applications and provides an IP restriction layer
+This is a Nginx application which is a proxy for all apps that run on the PaaS and restricts access to them by IP address.
 
-All PaaS traffic will go through the route service therefore we can completely protect and/or filter traffic with this service.
+If a user's IP address is not in our allowed list then we can instead allow access using a username and password.
+
+We currently use this in preview and staging to make sure only our team can access our preview and staging environments.
 
 ## Requirements
 
 * Cloud Foundry CLI (https://docs.cloudfoundry.org/cf-cli/install-go-cli.html)
-* The manifest template is generated using Ruby ERB therefore Ruby needs to be installed.
-
-You should log in using the Cloud Foundry CLI (https://docs.cloud.service.gov.uk/#setting-up-the-command-line).
-
-For all actions you should always have to make sure you selected the space you intend to target.
+* Jinja CLI. You can install this using `pip install jinja2-cli`.
 
 ## Deployment
 
@@ -19,7 +17,7 @@ The default application name is "route-service". If you want to change this (or 
 
 The default domain name is "cloudapps.digital". If you want to change this (or you want to bind to different domains), set the PAAS_DOMAIN environment variable for the make commands.
 
-The secret values are read from the notifications-credentials repository using pass, so you have to set the NOTIFY_CREDENTIALS environment variable to your local credentials repository path. The values are read from paas/route-service-env.enc.
+The secret values are read from the notifications-credentials repository using pass, so you have to set the NOTIFY_CREDENTIALS environment variable to your local credentials repository path. The values are read from `credentials/http_auth/notify/password`.
 
 The instance count can be set with the PAAS_INSTANCES environment variable (1 by default).
 
