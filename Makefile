@@ -6,6 +6,7 @@ CF_ORG = govuk-notify
 CF_APP_NAME ?= route-service
 
 NOTIFY_CREDENTIALS ?= ~/.notify-credentials
+MANIFEST_PATH ?= /tmp/manifest.yml
 
 
 $(eval export CF_APP_NAME=${CF_APP_NAME})
@@ -25,6 +26,7 @@ generate-manifest: ## Generates the PaaS manifest file
 	    -D CF_INSTANCES=${CF_INSTANCES} \
 	    -D BASE_DOMAIN=${BASE_DOMAIN} \
 	    --format=yaml \
+		2>&1
 
 .PHONY: api
 api:
@@ -76,18 +78,22 @@ cf-login: ## Log in to Cloud Foundry
 
 .PHONY: cf-push
 cf-push: check-variables add-cloudfront-ips generate-htpasswd ## Pushes the app to Cloud Foundry (causes downtime!)
-	cf push -f <(make -s generate-manifest)
+	make -s generate-manifest > ${MANIFEST_PATH}
+	cf push -f ${MANIFEST_PATH}
 	rm nginx.conf htpasswd
+	rm -f ${MANIFEST_PATH}
 
 .PHONY: cf-deploy
 cf-deploy: check-variables add-cloudfront-ips generate-htpasswd ## Deploys the app to Cloud Foundry without downtime
 	@cf app --guid ${CF_APP_NAME} || exit 1
 	cf rename ${CF_APP_NAME} ${CF_APP_NAME}-rollback
-	cf push -f <(make -s generate-manifest)
+	make -s generate-manifest > ${MANIFEST_PATH}
+	cf push -f ${MANIFEST_PATH}
 	cf scale -i $$(cf curl /v2/apps/$$(cf app --guid ${CF_APP_NAME}) | jq -r ".entity.instances" 2>/dev/null || echo "1") ${CF_APP_NAME}
 	cf stop ${CF_APP_NAME}-rollback
 	cf delete -f ${CF_APP_NAME}-rollback
 	rm nginx.conf htpasswd
+	rm -f ${MANIFEST_PATH}
 
 .PHONY: cf-rollback
 cf-rollback: check-variables ## Rollbacks the app to the previous release
